@@ -40,57 +40,76 @@ const EVENTS_DATA = [
 ];
 
 const CONVOS_DATA = [
-  { id:1, name:"Emma Laurent",      init:"EL", preview:"T'es dispo demain pour réviser ?", time:"14:32", unread:2, color:"#FB6376", msgs:[
+  { id:1, name:"Emma Laurent",      init:"EL", preview:"T'es dispo demain pour réviser ?", time:"14:32", unread:2, color:"#FB6376",
+    persona:`Tu es Emma Laurent, étudiante en droit L2 à Bordeaux. Tu prépares les partiels de droit constitutionnel avec l'utilisateur·rice. Vous prévoyez d'aller réviser à la BU Montaigne (campus de Pessac). Tu peux proposer de covoiturer depuis la place de la Victoire. Ton chaleureux, pote, jamais corporate. Phrases courtes (max 2-3). 1 emoji max par message, parfois aucun. Réponds toujours en français.`,
+    msgs:[
     {me:false, txt:"Salut ! T'as vu la session révisions de demain à la BU Montaigne ?"},
     {me:true,  txt:"Oui ! Je pensais y aller, t'es dispo ?"},
     {me:false, txt:"Carrément 🎉 On peut covoiturer depuis Victoire si tu veux"},
     {me:true,  txt:"Super idée ! On se retrouve à 13h30 ?"},
     {me:false, txt:"T'es dispo demain pour réviser ?"},
-  ], replies:[
-    "Oui avec plaisir ! 😊",
-    "Trop bien, j'ai justement besoin d'aide sur le cours de compta",
-    "On se retrouve à la BU alors ?",
-    "Parfait ! À tout à l'heure 👋",
-    "Super ! T'as des fiches sur ce chapitre ?",
-    "Carrément, je suis dispo cet aprem aussi si tu veux",
-    "Haha oui c'était trop bien 🎉",
   ]},
-  { id:2, name:"Session Droit S4",  init:"SD", preview:"Lucas : J'apporte les fiches !", time:"12:01", unread:5, color:"#8B5CF6", msgs:[
+  { id:2, name:"Session Droit S4",  init:"SD", preview:"Lucas : J'apporte les fiches !", time:"12:01", unread:5, color:"#8B5CF6",
+    persona:`Tu simules une conversation de groupe Study Vibes pour une session de révisions de droit (S4) à la BU Montaigne.
+Participants du groupe (autres que l'utilisateur·rice) : Lucas (organisé, apporte les fiches), Emma (sérieuse, apporte les annales), Sofiane (sympa, amène souvent du café).
+RÈGLE STRICTE : chaque message que tu envoies commence OBLIGATOIREMENT par "Lucas : ", "Emma : " ou "Sofiane : " (avec l'espace après les deux-points). Varie les intervenants au fil des messages.
+Ton chaleureux, pote, court. 1 emoji max. Français uniquement.`,
+    msgs:[
     {me:false, txt:"Lucas : J'apporte les fiches de révision !"},
     {me:false, txt:"Emma : Super, moi j'apporte les annales 📚"},
     {me:true,  txt:"Parfait, à demain tout le monde ! RDV BU Montaigne"},
-  ], replies:[
-    "Lucas : OK je note 👍",
-    "Emma : Bonne idée !",
-    "Lucas : On commence à quelle heure ?",
-    "Sofiane : Je serai là aussi, j'apporte du café ☕",
-    "Emma : Top, à demain tout le monde 🙌",
-    "Lucas : N'oubliez pas les annales de l'an dernier !",
   ]},
-  { id:3, name:"Tom Ravel",         init:"TR", preview:"Super session hier 🙌",           time:"Hier",  unread:0, color:"#5D2A42", msgs:[
+  { id:3, name:"Tom Ravel",         init:"TR", preview:"Super session hier 🙌",           time:"Hier",  unread:0, color:"#5D2A42",
+    persona:`Tu es Tom Ravel, étudiant bordelais passionné de surf. Tu organises régulièrement des sessions surf au Médoc (Le Porge surtout). Tu viens de partager une session avec l'utilisateur·rice et vous prévoyez d'en refaire une bientôt. Tu connais les spots, tu check Windguru pour les marées et la houle.
+Ton décontracté, surfer-friendly, pote. Expressions naturelles ("vague", "spot", "planche", "marées", "houle"). Phrases courtes (max 2-3). 1 emoji max par message. Français uniquement.`,
+    msgs:[
     {me:false, txt:"Super session hier 🙌 La vague était parfaite"},
     {me:true,  txt:"Totalement ! On remet ça le mois prochain ?"},
     {me:false, txt:"Avec plaisir, je check les marées 🏄"},
-  ], replies:[
-    "Carrément ! La météo a l'air bonne la semaine prochaine 🌊",
-    "Je regarde les spots ce soir et je te dis",
-    "Trop bien, j'invite Nico aussi si t'es ok ?",
-    "Ouais ! On prend les planches le matin ?",
-    "Haha ouais trop hâte 🤙",
-    "Je check Windguru et je t'envoie les créneaux",
   ]},
-  { id:4, name:"Coworking Darwin",  init:"CD", preview:"Sofia : On commence à 10h ?",    time:"Lun",   unread:0, color:"#FB6376", msgs:[
+  { id:4, name:"Coworking Darwin",  init:"CD", preview:"Sofia : On commence à 10h ?",    time:"Lun",   unread:0, color:"#FB6376",
+    persona:`Tu simules une conversation de groupe Study Vibes pour une session de coworking au Darwin Écosystème (87 quai des Queyries, Bordeaux), côté terrasse.
+Participants du groupe (autres que l'utilisateur·rice) : Sofia (organisée, réserve la table, connaît le wifi), Léo (arrive parfois en retard, fan de café).
+RÈGLE STRICTE : chaque message commence OBLIGATOIREMENT par "Sofia : " ou "Léo : " (avec l'espace après les deux-points). Varie les intervenants.
+Ton chaleureux, pote, court. 1 emoji max. Français uniquement.`,
+    msgs:[
     {me:false, txt:"Sofia : On commence à 10h côté terrasse ?"},
     {me:true,  txt:"Oui pour moi c'est parfait !"},
-  ], replies:[
-    "Sofia : Super, je réserve la table 👌",
-    "Sofia : T'as besoin du mot de passe wifi ? C'est darwin2024",
-    "Léo : Je serai là vers 10h15, gardez-moi une place",
-    "Sofia : On commande des croissants ? 🥐",
-    "Léo : Bonne idée, je prends aussi un allongé",
-    "Sofia : À toute à l'heure alors 😊",
   ]},
 ];
+
+// ── PERSONA HELPERS ────────────────────────────────────────
+function personaForEvent(ev) {
+  return `Tu es ${ev.host}, étudiant·e bordelais·e qui organise l'événement "${ev.title}" (catégorie : ${ev.cat}).
+Date : ${ev.date} à ${ev.time}. Lieu : ${ev.loc} (${ev.address}).
+Description de ton événement : ${ev.desc}
+
+Tu chattes avec un·e autre étudiant·e qui te contacte via Study Vibes au sujet de cet événement.
+Tu connais tous les détails (horaires, lieu, prix éventuel, ce qu'il faut apporter) et tu peux y répondre à partir de la description.
+
+Style de réponse :
+- Ton chaleureux, direct, comme un pote — jamais corporate ni formel
+- Phrases courtes
+- 1 emoji max par message, parfois aucun
+- Max 2-3 phrases par réponse
+- Tu peux relancer avec une question pour faire vivre la conversation
+- Français uniquement`;
+}
+
+function createConvoFromEvent(ev) {
+  return {
+    id: `event-${ev.id}`,
+    name: ev.host,
+    init: ev.hostInit,
+    color: ev.hostColor,
+    eventTitle: ev.title,
+    persona: personaForEvent(ev),
+    preview: "Démarre la conversation…",
+    time: "maintenant",
+    unread: 0,
+    msgs: [],
+  };
+}
 
 const CATS = ["Tous","Révisions","Coworking","Sport","Musique","Sortie","Art","Gastronomie"];
 
@@ -308,5 +327,6 @@ function EventCardHorizontal({ ev, idx=0, onClick, onLike }) {
 
 Object.assign(window, {
   T, F, EVENTS_DATA, CONVOS_DATA, CATS,
+  personaForEvent, createConvoFromEvent,
   Avatar, Badge, Btn, Input, SectionTitle, ParticipantDots, PCOUNT, EventCard, EventCardHorizontal
 });
