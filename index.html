@@ -228,10 +228,23 @@ function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents]           = useState([]);
   const [tweaks, setTweakState]       = useState(TWEAK_DEFAULTS);
-  const [convos, setConvos]           = useState(() => {
-    try { const s = localStorage.getItem("sv_convos"); if (s) return JSON.parse(s); } catch(e) {}
-    return CONVOS_DATA.map(c => ({...c, msgs:[...c.msgs]}));
+  // Bump pour forcer le reset des anciennes convos hardcodées en localStorage
+  const CONVOS_VERSION = "v2-events-only";
+  const [convos, setConvos] = useState(() => {
+    try {
+      const version = localStorage.getItem("sv_convos_version");
+      if (version !== CONVOS_VERSION) {
+        // Migration : on vide les vieilles convos par défaut
+        localStorage.removeItem("sv_convos");
+        localStorage.setItem("sv_convos_version", CONVOS_VERSION);
+        return [];
+      }
+      const saved = localStorage.getItem("sv_convos");
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return [];
   });
+  const [activeConvoId, setActiveConvoId] = useState(null);
   const [profile, setProfile] = useState({
     name:"", handle:"", study:"", city:"Bordeaux", bio:""
   });
@@ -348,6 +361,21 @@ function App() {
     if (selectedEvent?.id===id) setSelectedEvent(ev => ({...ev, liked:!ev.liked}));
   };
 
+  // Contacter l'organisateur d'un événement : crée la convo si elle n'existe pas, puis ouvre la messagerie
+  // Une convo dédiée par événement (jamais de réutilisation par nom de host)
+  const contactHost = (ev) => {
+    const convoId = `event-${ev.id}`;
+    const existing = convos.find(c => c.id === convoId);
+    if (existing) {
+      setActiveConvoId(existing.id);
+    } else {
+      const fresh = createConvoFromEvent(ev);
+      setConvos(prev => [fresh, ...prev]);
+      setActiveConvoId(fresh.id);
+    }
+    navigate("messages");
+  };
+
   const setTweak = (k, v) => {
     const next = typeof k==="object" ? {...tweaks,...k} : {...tweaks,[k]:v};
     setTweakState(next);
@@ -383,10 +411,10 @@ function App() {
         overflowX:"hidden",
       }}>
         {screen==="home"     && <HomeView events={events} navigate={navigate} onLike={toggleLike} profile={profile} />}
-        {screen==="messages" && <MessagesView navigate={navigate} convos={convos} setConvos={setConvos} />}
+        {screen==="messages" && <MessagesView navigate={navigate} convos={convos} setConvos={setConvos} activeConvoId={activeConvoId} setActiveConvoId={setActiveConvoId} />}
         {screen==="profile"  && <ProfileView events={events} navigate={navigate} onLike={toggleLike} profile={profile} setProfile={setProfile} onAvatarUpload={handleAvatarUpload} />}
         {screen==="detail"   && selectedEvent && (
-          <EventDetailView ev={selectedEvent} navigate={navigate} onJoin={toggleJoin} onLike={toggleLike} />
+          <EventDetailView ev={selectedEvent} navigate={navigate} onJoin={toggleJoin} onLike={toggleLike} onContactHost={contactHost} />
         )}
         {screen==="create" && (
           <CreateEventView

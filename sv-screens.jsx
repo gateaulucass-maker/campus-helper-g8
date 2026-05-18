@@ -341,7 +341,7 @@ function ReviewSection({ eventId }) {
 }
 
 // ── EVENT DETAIL ───────────────────────────────────────────
-function EventDetailView({ ev, navigate, onJoin, onLike }) {
+function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost }) {
   const idx = EVENTS_DATA.findIndex(e => e.id === ev.id);
   const parts = PCOUNT[idx >= 0 ? idx : 0];
   const [joined, setJoined] = React.useState(ev.joined);
@@ -449,7 +449,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike }) {
             }}>Se désinscrire</button>
           )}
 
-          <button onClick={() => navigate("messages")} style={{
+          <button onClick={() => onContactHost ? onContactHost(ev) : navigate("messages")} style={{
             width:"100%", padding:"11px", borderRadius:12, fontWeight:600,
             fontSize:14, cursor:"pointer", border:`1.5px solid ${T.border}`,
             background:"transparent", color:T.text, fontFamily:F.body, marginBottom:8
@@ -472,8 +472,15 @@ function EventDetailView({ ev, navigate, onJoin, onLike }) {
 }
 
 // ── MESSAGES VIEW ──────────────────────────────────────────
-function MessagesView({ convos, setConvos }) {
-  const [active, setActive] = React.useState(0);
+function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navigate }) {
+  const initialIdx = React.useMemo(() => {
+    if (activeConvoId) {
+      const i = convos.findIndex(c => c.id === activeConvoId);
+      if (i >= 0) return i;
+    }
+    return 0;
+  }, []); // run once on mount
+  const [active, setActive] = React.useState(initialIdx);
   const [draft, setDraft] = React.useState("");
   const [typing, setTyping] = React.useState(false);
   const bottomRef = React.useRef(null);
@@ -482,6 +489,18 @@ function MessagesView({ convos, setConvos }) {
   React.useEffect(() => {
     localStorage.setItem("sv_convos", JSON.stringify(convos));
   }, [convos]);
+
+  // Si on arrive depuis "Contacter l'organisateur", on focus la bonne convo puis on consomme l'id
+  React.useEffect(() => {
+    if (activeConvoId) {
+      const i = convos.findIndex(c => c.id === activeConvoId);
+      if (i >= 0) {
+        setActive(i);
+        setConvos(prev => prev.map((c, j) => j === i ? {...c, unread: 0} : c));
+      }
+      setActiveConvoId && setActiveConvoId(null);
+    }
+  }, [activeConvoId]);
 
   const openConvo = (i) => {
     setActive(i);
@@ -492,25 +511,85 @@ function MessagesView({ convos, setConvos }) {
     if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior:"smooth" });
   }, [convos, typing]);
 
-  const send = () => {
-    if (!draft.trim()) return;
+  const send = async () => {
+    if (!draft.trim() || typing || !convo) return;
     const msgText = draft;
+
+    // 1. Ajouter le message de l'utilisateur immédiatement
+    const updatedMsgs = [...convo.msgs, {me:true, txt:msgText}];
     setConvos(prev => prev.map((c,i) => i===active
-      ? {...c, msgs:[...c.msgs, {me:true, txt:msgText}], preview:msgText, unread:0}
+      ? {...c, msgs:updatedMsgs, preview:msgText, unread:0}
       : c));
     setDraft("");
-
-    const replies = convo.replies || ["D'accord 👍", "Super !", "OK je vois !", "Haha 😄", "Bonne idée !"];
-    const reply = replies[Math.floor(Math.random() * replies.length)];
-    const delay = 900 + Math.random() * 900;
     setTyping(true);
-    setTimeout(() => {
+
+    // 2. Construire le payload pour OpenAI
+    const apiMessages = updatedMsgs.map(m => ({
+      role: m.me ? "user" : "assistant",
+      content: m.txt,
+    }));
+    const systemPrompt = convo.persona
+      || "Tu es un·e étudiant·e bordelais·e sympa qui chatte sur Study Vibes. Réponds en français, court, chaleureux, max 2-3 phrases.";
+
+    // 3. Appeler la fonction serverless /api/chat
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: apiMessages, systemPrompt }),
+      });
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`API ${res.status} : ${errBody}`);
+      }
+      const data = await res.json();
+      const reply = (data.reply || "").trim() || "Hmm…";
       setTyping(false);
       setConvos(prev => prev.map((c,i) => i===active
         ? {...c, msgs:[...c.msgs, {me:false, txt:reply}], preview:reply, time:"maintenant"}
         : c));
-    }, delay);
+    } catch (err) {
+      console.error("Chat error:", err);
+      setTyping(false);
+      setConvos(prev => prev.map((c,i) => i===active
+        ? {...c, msgs:[...c.msgs, {me:false, txt:"⚠️ Impossible de joindre l'IA. Réessaie dans un instant."}], preview:"Erreur de connexion", time:"maintenant"}
+        : c));
+    }
   };
+
+  // Empty state : aucune conversation tant qu'on n'a contacté personne
+  if (convos.length === 0) {
+    return (
+      <div style={{
+        height:"calc(100vh - 64px - 80px)",
+        background:T.card,
+        borderRadius:20,
+        border:`1px solid ${T.border}`,
+        boxShadow:"0 4px 24px rgba(93,42,66,0.08)",
+        display:"flex", flexDirection:"column",
+        alignItems:"center", justifyContent:"center",
+        padding:"48px 24px", textAlign:"center", gap:16
+      }}>
+        <div style={{ fontSize:64, opacity:0.35 }}>💬</div>
+        <h2 style={{ fontSize:22, fontFamily:F.title, fontWeight:400, color:T.text, margin:0 }}>
+          Aucune conversation pour l'instant
+        </h2>
+        <p style={{ fontSize:14, color:T.sec, fontFamily:F.body, maxWidth:420, lineHeight:1.6, margin:0, fontWeight:500 }}>
+          Pour démarrer une discussion, ouvre un événement qui t'intéresse et clique sur <span style={{color:T.coral, fontWeight:700}}>« 💬 Contacter l'organisateur »</span>.
+        </p>
+        <button onClick={() => navigate && navigate("home")} className="sv-btn-primary" style={{
+          marginTop:8,
+          padding:"12px 28px", borderRadius:12, fontWeight:700,
+          fontSize:14, cursor:"pointer", border:"none",
+          background:T.coral, color:"#fff",
+          fontFamily:F.body,
+          boxShadow:"0 4px 14px rgba(251,99,118,0.3)"
+        }}>
+          Découvrir les événements
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -619,16 +698,23 @@ function MessagesView({ convos, setConvos }) {
           display:"flex", gap:12, alignItems:"center" }}>
           <input value={draft} onChange={e=>setDraft(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&send()}
-            placeholder="Écrire un message…"
+            disabled={typing}
+            placeholder={typing ? "L'IA réfléchit…" : "Écrire un message…"}
             style={{
               flex:1, background:T.muted, border:`1.5px solid ${T.border}`, borderRadius:50,
               padding:"12px 20px", fontSize:14, fontWeight:500, color:T.text,
-              fontFamily:F.body, outline:"none"
+              fontFamily:F.body, outline:"none",
+              opacity: typing ? 0.6 : 1
             }} />
-          <button onClick={send} className="sv-btn-primary" style={{
-            width:46, height:46, borderRadius:46, background:T.coral, border:"none",
-            cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:18, boxShadow:"0 4px 12px rgba(251,99,118,0.3)"
+          <button onClick={send} disabled={typing || !draft.trim()} className="sv-btn-primary" style={{
+            width:46, height:46, borderRadius:46,
+            background: (typing || !draft.trim()) ? T.border : T.coral,
+            border:"none",
+            cursor: (typing || !draft.trim()) ? "not-allowed" : "pointer",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:18,
+            boxShadow: (typing || !draft.trim()) ? "none" : "0 4px 12px rgba(251,99,118,0.3)",
+            opacity: (typing || !draft.trim()) ? 0.5 : 1
           }}>➤</button>
         </div>
       </div>
