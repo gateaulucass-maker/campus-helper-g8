@@ -472,7 +472,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost }) {
 }
 
 // ── MESSAGES VIEW ──────────────────────────────────────────
-function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navigate }) {
+function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navigate, currentUser }) {
   const initialIdx = React.useMemo(() => {
     if (activeConvoId) {
       const i = convos.findIndex(c => c.id === activeConvoId);
@@ -486,9 +486,7 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
   const bottomRef = React.useRef(null);
   const convo = convos[active];
 
-  React.useEffect(() => {
-    localStorage.setItem("sv_convos", JSON.stringify(convos));
-  }, [convos]);
+  // (Plus de persistance localStorage : les messages sont stockés dans Supabase chat_messages)
 
   // Si on arrive depuis "Contacter l'organisateur", on focus la bonne convo puis on consomme l'id
   React.useEffect(() => {
@@ -512,10 +510,10 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
   }, [convos, typing]);
 
   const send = async () => {
-    if (!draft.trim() || typing || !convo) return;
+    if (!draft.trim() || typing || !convo || !currentUser) return;
     const msgText = draft;
 
-    // 1. Ajouter le message de l'utilisateur immédiatement
+    // 1. Optimistic update : ajouter le message de l'utilisateur immédiatement
     const updatedMsgs = [...convo.msgs, {me:true, txt:msgText}];
     setConvos(prev => prev.map((c,i) => i===active
       ? {...c, msgs:updatedMsgs, preview:msgText, unread:0}
@@ -523,7 +521,14 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
     setDraft("");
     setTyping(true);
 
-    // 2. Construire le payload pour OpenAI
+    // 2. Sauvegarder le message user dans Supabase (best-effort, on continue même si ça échoue)
+    try {
+      await DB.sendChatMessage(currentUser.id, convo.activity_id, "user", msgText);
+    } catch(err) {
+      console.error("Échec sauvegarde du message utilisateur :", err);
+    }
+
+    // 3. Construire le payload pour OpenAI
     const apiMessages = updatedMsgs.map(m => ({
       role: m.me ? "user" : "assistant",
       content: m.txt,
@@ -531,7 +536,7 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
     const systemPrompt = convo.persona
       || "Tu es un·e étudiant·e bordelais·e sympa qui chatte sur Study Vibes. Réponds en français, court, chaleureux, max 2-3 phrases.";
 
-    // 3. Appeler la fonction serverless /api/chat
+    // 4. Appeler la fonction serverless /api/chat
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -544,6 +549,14 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
       }
       const data = await res.json();
       const reply = (data.reply || "").trim() || "Hmm…";
+
+      // 5. Sauvegarder la réponse IA dans Supabase
+      try {
+        await DB.sendChatMessage(currentUser.id, convo.activity_id, "assistant", reply);
+      } catch(err) {
+        console.error("Échec sauvegarde de la réponse IA :", err);
+      }
+
       setTyping(false);
       setConvos(prev => prev.map((c,i) => i===active
         ? {...c, msgs:[...c.msgs, {me:false, txt:reply}], preview:reply, time:"maintenant"}

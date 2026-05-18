@@ -165,10 +165,44 @@ const DB = (() => {
     });
   }
 
+  // ── CHAT MESSAGES ───────────────────────────────────────────
+
+  async function sendChatMessage(userId, activityId, role, content) {
+    const { data, error } = await s.from("chat_messages").insert({
+      user_id:     userId,
+      activity_id: activityId,
+      role,
+      content,
+    }).select().single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function getChatMessages(userId, activityId) {
+    const { data, error } = await s.from("chat_messages")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("activity_id", activityId)
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    return data || [];
+  }
+
+  // Récupère TOUS les messages de l'utilisateur pour reconstruire la liste des conversations
+  async function getAllChatMessages(userId) {
+    const { data, error } = await s.from("chat_messages")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    return data || [];
+  }
+
   return {
     signUp, signIn, signOut, getSession, onAuthChange,
     getProfile, updateProfile, uploadAvatar, uploadEventImage,
     createActivity, joinActivity, leaveActivity, getActivities,
+    sendChatMessage, getChatMessages, getAllChatMessages,
   };
 })();
 

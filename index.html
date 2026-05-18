@@ -228,23 +228,17 @@ function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents]           = useState([]);
   const [tweaks, setTweakState]       = useState(TWEAK_DEFAULTS);
-  // Bump pour forcer le reset des anciennes convos hardcodées en localStorage
-  const CONVOS_VERSION = "v2-events-only";
-  const [convos, setConvos] = useState(() => {
-    try {
-      const version = localStorage.getItem("sv_convos_version");
-      if (version !== CONVOS_VERSION) {
-        // Migration : on vide les vieilles convos par défaut
-        localStorage.removeItem("sv_convos");
-        localStorage.setItem("sv_convos_version", CONVOS_VERSION);
-        return [];
-      }
-      const saved = localStorage.getItem("sv_convos");
-      if (saved) return JSON.parse(saved);
-    } catch(e) {}
-    return [];
-  });
+  // Convos chargées depuis Supabase à chaque login (plus de localStorage)
+  const [convos, setConvos] = useState([]);
   const [activeConvoId, setActiveConvoId] = useState(null);
+
+  // Nettoyage one-shot : supprimer les anciennes clés localStorage de la messagerie
+  useEffect(() => {
+    try {
+      localStorage.removeItem("sv_convos");
+      localStorage.removeItem("sv_convos_version");
+    } catch(e) {}
+  }, []);
   const [profile, setProfile] = useState({
     name:"", handle:"", study:"", city:"Bordeaux", bio:""
   });
@@ -284,25 +278,52 @@ function App() {
     }
   }
 
+  // ── Chargement des conversations depuis Supabase
+  // Reconstruit l'arborescence convos[] à partir de chat_messages, en s'appuyant sur events
+  async function loadConvos(userId, eventsList) {
+    try {
+      const allMsgs = await DB.getAllChatMessages(userId);
+      const map = new Map();
+      for (const msg of allMsgs) {
+        if (!map.has(msg.activity_id)) {
+          const ev = eventsList.find(e => e.id === msg.activity_id);
+          if (!ev) continue; // event supprimé ou non visible → on ignore
+          map.set(msg.activity_id, { ...createConvoFromEvent(ev), msgs: [], preview: "" });
+        }
+        const convo = map.get(msg.activity_id);
+        convo.msgs.push({ me: msg.role === "user", txt: msg.content });
+        convo.preview = msg.content;
+      }
+      setConvos(Array.from(map.values()));
+    } catch(e) {
+      console.error("Erreur chargement conversations :", e);
+      setConvos([]);
+    }
+  }
+
   // ── Vérification de session au démarrage + écoute des changements auth
   useEffect(() => {
-    DB.getSession().then(session => {
+    DB.getSession().then(async session => {
       if (session) {
         setCurrentUser(session.user);
         loadProfile(session.user);
-        loadEvents(session.user.id);
+        const evs = await loadEvents(session.user.id);
+        loadConvos(session.user.id, evs);
       }
       setAuthReady(true);
     });
 
-    const { data: { subscription } } = DB.onAuthChange((event, session) => {
+    const { data: { subscription } } = DB.onAuthChange(async (event, session) => {
       if (session) {
         setCurrentUser(session.user);
         loadProfile(session.user);
-        loadEvents(session.user.id);
+        const evs = await loadEvents(session.user.id);
+        loadConvos(session.user.id, evs);
       } else {
         setCurrentUser(null);
         setEvents([]);
+        setConvos([]); // important : on vide les convos quand on se déconnecte
+        setActiveConvoId(null);
       }
     });
 
@@ -317,6 +338,8 @@ function App() {
     await DB.signOut();
     setCurrentUser(null);
     setEvents([]);
+    setConvos([]);
+    setActiveConvoId(null);
     setScreen("home");
     setHistory(["home"]);
   };
@@ -361,11 +384,11 @@ function App() {
     if (selectedEvent?.id===id) setSelectedEvent(ev => ({...ev, liked:!ev.liked}));
   };
 
-  // Contacter l'organisateur d'un événement : crée la convo si elle n'existe pas, puis ouvre la messagerie
-  // Une convo dédiée par événement (jamais de réutilisation par nom de host)
+  // Contacter l'organisateur d'un événement : crée la convo locale si elle n'existe pas, puis ouvre la messagerie
+  // Une convo dédiée par événement (matching strict par activity_id)
+  // La convo n'existe en BDD qu'après l'envoi du premier message
   const contactHost = (ev) => {
-    const convoId = `event-${ev.id}`;
-    const existing = convos.find(c => c.id === convoId);
+    const existing = convos.find(c => c.activity_id === ev.id);
     if (existing) {
       setActiveConvoId(existing.id);
     } else {
@@ -411,7 +434,7 @@ function App() {
         overflowX:"hidden",
       }}>
         {screen==="home"     && <HomeView events={events} navigate={navigate} onLike={toggleLike} profile={profile} />}
-        {screen==="messages" && <MessagesView navigate={navigate} convos={convos} setConvos={setConvos} activeConvoId={activeConvoId} setActiveConvoId={setActiveConvoId} />}
+        {screen==="messages" && <MessagesView navigate={navigate} convos={convos} setConvos={setConvos} activeConvoId={activeConvoId} setActiveConvoId={setActiveConvoId} currentUser={currentUser} />}
         {screen==="profile"  && <ProfileView events={events} navigate={navigate} onLike={toggleLike} profile={profile} setProfile={setProfile} onAvatarUpload={handleAvatarUpload} />}
         {screen==="detail"   && selectedEvent && (
           <EventDetailView ev={selectedEvent} navigate={navigate} onJoin={toggleJoin} onLike={toggleLike} onContactHost={contactHost} />
