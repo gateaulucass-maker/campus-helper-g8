@@ -64,6 +64,7 @@ Style de réponse :
 function createConvoFromEvent(ev) {
   return {
     id: `event-${ev.id}`,
+    activity_id: ev.id, // pour les requêtes Supabase (bigint de la table activities)
     name: ev.host,
     init: ev.hostInit,
     color: ev.hostColor,
