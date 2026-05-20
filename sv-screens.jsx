@@ -343,11 +343,24 @@ function ReviewSection({ eventId }) {
 }
 
 // ── EVENT DETAIL ───────────────────────────────────────────
-function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost }) {
+function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdateImage }) {
   const idx = EVENTS_DATA.findIndex(e => e.id === ev.id);
   const parts = PCOUNT[idx >= 0 ? idx : 0];
   const [joined, setJoined] = React.useState(ev.joined);
   const liked = !!ev.liked;
+  const [imgSrc, setImgSrc] = React.useState(ev.img);
+  const [uploadingImg, setUploadingImg] = React.useState(false);
+
+  const handleImageEdit = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !onUpdateImage) return;
+    setUploadingImg(true);
+    try {
+      const url = await onUpdateImage(ev.id, file);
+      if (url) setImgSrc(url);
+    } catch(err) { console.warn("Photo update failed:", err); }
+    setUploadingImg(false);
+  };
 
   const infoItems = [
     { icon:"", label:"Date", val:`${ev.date} · ${ev.time}` },
@@ -364,8 +377,23 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost }) {
         fontFamily:F.body, fontWeight:600, fontSize:14
       }}>← Retour</button>
 
-      <div style={{ borderRadius:24, overflow:"hidden", height:400, marginBottom:40 }}>
-        <img src={ev.img} alt={ev.title} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+      <div style={{ borderRadius:24, overflow:"hidden", height:400, marginBottom:40, position:"relative" }}>
+        <img src={imgSrc} alt={ev.title} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+        {ev.createdByMe && (
+          <label style={{
+            position:"absolute", bottom:16, right:16,
+            background:"rgba(0,0,0,0.55)", color:"#fff",
+            borderRadius:12, padding:"9px 16px",
+            fontFamily:F.body, fontWeight:600, fontSize:13,
+            cursor: uploadingImg ? "wait" : "pointer",
+            display:"flex", alignItems:"center", gap:8,
+            backdropFilter:"blur(4px)"
+          }}>
+            {uploadingImg ? "Upload…" : "📷 Modifier la photo"}
+            <input type="file" accept="image/*" style={{ display:"none" }}
+              onChange={handleImageEdit} disabled={uploadingImg} />
+          </label>
+        )}
       </div>
 
       <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:40, alignItems:"start" }}>
@@ -1132,14 +1160,15 @@ function CreateEventView({ navigate, currentUser, onCreated }) {
     setError(""); setLoading(true);
     try {
       const activity = await DB.createActivity(currentUser.id, form);
+      if (imageFile && activity?.id) {
+        // Attend l'upload max 15s — loadEvents récupère ensuite la bonne image_url
+        await Promise.race([
+          DB.uploadEventImage(imageFile, activity.id),
+          new Promise(resolve => setTimeout(resolve, 15000)),
+        ]).catch(err => console.warn("Image upload:", err.message || err));
+      }
       setLoading(false);
       onCreated();
-      // Upload image en arrière-plan sans bloquer la navigation
-      if (imageFile && activity?.id) {
-        DB.uploadEventImage(imageFile, activity.id).catch(err => {
-          console.warn("Image upload failed:", err.message || err);
-        });
-      }
     } catch(e) {
       setError(e.message || "Erreur lors de la publication.");
       setLoading(false);

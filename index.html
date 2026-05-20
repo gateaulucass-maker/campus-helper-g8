@@ -437,7 +437,12 @@ function App() {
         {screen==="messages" && <MessagesView navigate={navigate} convos={convos} setConvos={setConvos} activeConvoId={activeConvoId} setActiveConvoId={setActiveConvoId} currentUser={currentUser} />}
         {screen==="profile"  && <ProfileView events={events} navigate={navigate} onLike={toggleLike} profile={profile} setProfile={setProfile} onAvatarUpload={handleAvatarUpload} />}
         {screen==="detail"   && selectedEvent && (
-          <EventDetailView ev={selectedEvent} navigate={navigate} onJoin={toggleJoin} onLike={toggleLike} onContactHost={contactHost} />
+          <EventDetailView ev={selectedEvent} navigate={navigate} onJoin={toggleJoin} onLike={toggleLike} onContactHost={contactHost} onUpdateImage={async (id, file) => {
+            const url = await DB.uploadEventImage(file, id);
+            loadEvents(currentUser.id);
+            setSelectedEvent(ev => ev?.id === id ? {...ev, img: url} : ev);
+            return url;
+          }} />
         )}
         {screen==="create" && (
           <CreateEventView
