@@ -140,16 +140,16 @@ function HomeView({ events, navigate, onLike, profile }) {
         <>
           <SectionTitle action={showAllActu ? "Réduire" : "Voir tout"} onAction={() => setShowAllActu(v => !v)}>Actualité</SectionTitle>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, marginBottom:48 }}>
-            {(showAllActu ? events : events.slice(0,3)).map((ev,i) => (
+            {(() => { const upcoming = events.filter(e => !e.past); return (showAllActu ? upcoming : upcoming.slice(0,3)).map((ev,i) => (
               <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
-            ))}
+            )); })()}
           </div>
 
           <SectionTitle action={showAllSugg ? "Réduire" : "Voir tout"} onAction={() => setShowAllSugg(v => !v)}>Suggestions pour toi</SectionTitle>
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            {(showAllSugg ? events : events.slice(0,5)).map((ev,i) => (
+            {(() => { const upcoming = events.filter(e => !e.past); return (showAllSugg ? upcoming : upcoming.slice(0,5)).map((ev,i) => (
               <EventCardHorizontal key={ev.id} ev={ev} idx={i+3} onClick={ev => navigate("detail", ev)} onLike={onLike} />
-            ))}
+            )); })()}
           </div>
         </>
       )}
