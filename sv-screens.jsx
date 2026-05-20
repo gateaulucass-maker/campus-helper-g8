@@ -1158,21 +1158,27 @@ function CreateEventView({ navigate, currentUser, onCreated }) {
   const handlePublish = async () => {
     if (!form.title.trim()) { setError("Le titre est requis."); return; }
     setError(""); setLoading(true);
+    let activity = null;
     try {
-      const activity = await DB.createActivity(currentUser.id, form);
-      if (imageFile && activity?.id) {
-        // Attend l'upload max 15s — loadEvents récupère ensuite la bonne image_url
-        await Promise.race([
-          DB.uploadEventImage(imageFile, activity.id),
-          new Promise(resolve => setTimeout(resolve, 15000)),
-        ]).catch(err => console.warn("Image upload:", err.message || err));
-      }
-      setLoading(false);
-      onCreated();
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Délai dépassé — vérifie ta connexion et réessaie.")), 15000)
+      );
+      activity = await Promise.race([DB.createActivity(currentUser.id, form), timeout]);
     } catch(e) {
-      setError(e.message || "Erreur lors de la publication.");
+      setError(e.message || String(e) || "Erreur lors de la création.");
       setLoading(false);
+      return;
     }
+
+    if (imageFile && activity?.id) {
+      await Promise.race([
+        DB.uploadEventImage(imageFile, activity.id),
+        new Promise(resolve => setTimeout(resolve, 15000)),
+      ]).catch(err => console.warn("Image upload:", err.message || err));
+    }
+
+    setLoading(false);
+    onCreated();
   };
 
   return (
