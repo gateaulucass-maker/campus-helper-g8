@@ -763,6 +763,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
   const upcoming = showAllUpcoming ? joinedAll : joinedAll.slice(0,3);
   const past = events.filter(e => e.past);
   const liked = events.filter(e => e.liked);
+  const created = events.filter(e => e.createdByMe);
   const initials = profile.name.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 
   return (
@@ -862,7 +863,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
             @{profile.handle}{profile.study ? ` · ${profile.study}` : ""}{profile.city ? `, ${profile.city}` : ""}
           </p>
           <div style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
-            {[[String(joinedAll.length),"Événements"],["12","Amis"],["3","Créés"],[String(liked.length),"Favoris"]].map(([n,l])=>(
+            {[[String(joinedAll.length),"Événements"],["12","Amis"],[String(created.length),"Créés"],[String(liked.length),"Favoris"]].map(([n,l])=>(
               <div key={l}>
                 <p style={{ fontSize:18, fontFamily:F.title, fontWeight:400, color:"#fff", margin:0 }}>{n}</p>
                 <p style={{ fontSize:11, color:"rgba(255,255,255,0.55)", fontFamily:F.body, margin:0 }}>{l}</p>
@@ -896,6 +897,25 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
           {profile.bio}
         </p>
       </div>
+
+      {/* Mes créations */}
+      <SectionTitle action={created.length > 3 ? "Voir tout" : null} onAction={() => navigate("home")}>Activités que j'ai créées</SectionTitle>
+      {created.length > 0 ? (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, marginBottom:48 }}>
+          {created.map((ev,i) => (
+            <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
+          ))}
+        </div>
+      ) : (
+        <div style={{ padding:"28px 32px", color:T.sec,
+          background:T.card, borderRadius:16, marginBottom:48, border:`1px solid ${T.border}`,
+          display:"flex", alignItems:"center", gap:16 }}>
+          <span style={{ fontSize:22, color:T.border, flexShrink:0 }}>✨</span>
+          <p style={{ fontWeight:500, fontFamily:F.body, margin:0, fontSize:14 }}>
+            Tu n'as pas encore créé d'activité. Clique sur <span style={{color:T.coral, fontWeight:700}}>« + Créer »</span> pour lancer la tienne !
+          </p>
+        </div>
+      )}
 
       {/* Favoris */}
       <SectionTitle>♥ Mes favoris</SectionTitle>
