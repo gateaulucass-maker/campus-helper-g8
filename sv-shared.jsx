@@ -164,7 +164,7 @@ function Input({ label, type="text", placeholder, value, onChange, textarea, req
 function SectionTitle({ children, action, onAction }) {
   return (
     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:24 }}>
-      <h2 style={{ fontSize:20, fontWeight:400, color:T.text, margin:0, fontFamily:F.title }}>{children}</h2>
+      <h2 className="sv-section-title-el" style={{ fontSize:20, fontWeight:400, color:T.text, margin:0, fontFamily:F.title }}>{children}</h2>
       {action && (
         <button onClick={onAction} className="sv-section-action" style={{
           fontSize:13, color:T.coral, fontWeight:600, letterSpacing:"0.01em",

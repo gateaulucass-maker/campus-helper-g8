@@ -23,18 +23,18 @@ function HomeView({ events, navigate, onLike, profile }) {
   return (
     <div style={{ paddingBottom:64 }}>
       {/* ── HERO ── */}
-      <div style={{
+      <div className="sv-hero" style={{
         background:`linear-gradient(135deg, ${T.purple} 0%, #8B3A5C 100%)`,
         borderRadius:24, padding:"48px 48px 44px", marginBottom:0,
       }}>
         {/* Greeting + title */}
-        <p style={{ fontSize:14, color:"rgba(255,255,255,0.55)", fontFamily:F.body, fontWeight:600, marginBottom:10, textAlign:"center" }}>
+        <p className="sv-hero-greeting" style={{ fontSize:14, color:"rgba(255,255,255,0.55)", fontFamily:F.body, fontWeight:600, marginBottom:10, textAlign:"center" }}>
           Bonjour {profile ? profile.name.split(" ")[0] : "toi"} 👋
         </p>
-        <h1 style={{ fontSize:38, fontFamily:F.title, fontWeight:400, color:"#fff", margin:"0 0 6px", lineHeight:1.2, textAlign:"center" }}>
+        <h1 className="sv-hero-title" style={{ fontSize:38, fontFamily:F.title, fontWeight:400, color:"#fff", margin:"0 0 6px", lineHeight:1.2, textAlign:"center" }}>
           Événements à Bordeaux
         </h1>
-        <p style={{ fontSize:15, color:"rgba(255,255,255,0.55)", fontFamily:F.body, fontWeight:500, marginBottom:28, textAlign:"center" }}>
+        <p className="sv-hero-sub" style={{ fontSize:15, color:"rgba(255,255,255,0.55)", fontFamily:F.body, fontWeight:500, marginBottom:28, textAlign:"center" }}>
           Révisions, coworking, sorties — retrouve ta communauté étudiante
         </p>
 
@@ -80,7 +80,7 @@ function HomeView({ events, navigate, onLike, profile }) {
       </div>
 
       {/* ── CATEGORY FILTERS ── */}
-      <div style={{
+      <div className="sv-cats" style={{
         display:"flex", gap:8, flexWrap:"wrap", alignItems:"center",
         padding:"24px 0 32px",
         borderBottom:`1px solid ${T.border}`, marginBottom:40
@@ -123,7 +123,7 @@ function HomeView({ events, navigate, onLike, profile }) {
             </p>
           </div>
           {filtered.length > 0 ? (
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20 }}>
+            <div className="sv-ev-grid sv-ev-grid-3">
               {filtered.map((ev,i) => (
                 <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
               ))}
@@ -141,7 +141,7 @@ function HomeView({ events, navigate, onLike, profile }) {
         // Default home layout
         <>
           <SectionTitle action={showAllActu ? "Réduire" : "Voir tout"} onAction={() => setShowAllActu(v => !v)}>Actualité</SectionTitle>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, marginBottom:48 }}>
+          <div className="sv-ev-grid sv-ev-grid-3">
             {(showAllActu ? upcomingEvents : upcomingEvents.slice(0,3)).map((ev,i) => (
               <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
             ))}
@@ -209,7 +209,7 @@ function SearchView({ events, navigate, onLike }) {
         {query ? `${results.length} résultat${results.length!==1?"s":""}` : "Tous les événements"}
       </p>
 
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20 }}>
+      <div className="sv-ev-grid sv-ev-grid-3">
         {results.map((ev,i) => (
           <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
         ))}
@@ -420,7 +420,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
         )}
       </div>
 
-      <div style={{ borderRadius:24, overflow:"hidden", height:400, marginBottom:40, position:"relative" }}>
+      <div className="sv-detail-img" style={{ borderRadius:24, overflow:"hidden", height:400, marginBottom:40, position:"relative" }}>
         <img src={imgSrc} alt={ev.title}
           style={{ width:"100%", height:"100%", objectFit:"cover", objectPosition: imgPos,
             cursor: cropping ? "grab" : "default", userSelect:"none" }}
@@ -477,7 +477,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
         )}
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:40, alignItems:"start" }}>
+      <div className="sv-detail-grid">
         {/* Left */}
         <div>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
@@ -488,7 +488,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
             {ev.title}
           </h1>
 
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:32 }}>
+          <div className="sv-info-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:32 }}>
             {infoItems.map(({label,val}) => (
               <div key={label} style={{
                 background:T.muted, borderRadius:14, padding:"14px 16px",
@@ -516,7 +516,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
         </div>
 
         {/* Right sticky card */}
-        <div style={{
+        <div className="sv-detail-sticky" style={{
           background:T.card, borderRadius:20, padding:"28px",
           border:`1px solid ${T.border}`,
           boxShadow:"0 4px 24px rgba(93,42,66,0.1)",
@@ -594,6 +594,7 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
   const [active, setActive] = React.useState(initialIdx);
   const [draft, setDraft] = React.useState("");
   const [typing, setTyping] = React.useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const bottomRef = React.useRef(null);
   const convo = convos[active];
 
@@ -614,6 +615,7 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
   const openConvo = (i) => {
     setActive(i);
     setConvos(prev => prev.map((c, j) => j === i ? {...c, unread: 0} : c));
+    setMobileSidebarOpen(false);
   };
 
   React.useEffect(() => {
@@ -716,7 +718,7 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
   }
 
   return (
-    <div style={{
+    <div className="sv-msg-container" style={{
       display:"grid", gridTemplateColumns:"300px 1fr",
       height:"calc(100vh - 64px - 80px)", background:T.card,
       borderRadius:20, overflow:"hidden",
@@ -724,7 +726,7 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
       boxShadow:"0 4px 24px rgba(93,42,66,0.08)"
     }}>
       {/* Sidebar */}
-      <div style={{ borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column" }}>
+      <div className={mobileSidebarOpen ? "sv-msg-sidebar sv-msg-show" : "sv-msg-sidebar"} style={{ borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column" }}>
         <div style={{ padding:"16px", borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <h2 style={{ fontSize:17, fontFamily:F.title, fontWeight:400, color:T.text, margin:0 }}>Messages</h2>
           <span style={{ fontSize:11, color:T.sec, fontFamily:F.body, fontWeight:600 }}>
@@ -775,9 +777,13 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
       </div>
 
       {/* Chat */}
-      <div style={{ display:"flex", flexDirection:"column", minHeight:0 }}>
+      <div className={mobileSidebarOpen ? "sv-msg-chat sv-msg-hidden" : "sv-msg-chat"} style={{ display:"flex", flexDirection:"column", minHeight:0 }}>
         <div style={{ padding:"16px 24px", borderBottom:`1px solid ${T.border}`,
           display:"flex", alignItems:"center", gap:12 }}>
+          <button className="sv-msg-back-btn" onClick={() => setMobileSidebarOpen(true)} style={{
+            background:"none", border:"none", cursor:"pointer",
+            color:T.sec, fontFamily:F.body, fontWeight:700, fontSize:18, padding:"0 4px 0 0"
+          }}>←</button>
           <Avatar init={convo.init} color={convo.color} size={40} />
           <div>
             <p style={{ fontWeight:700, fontSize:16, color:T.text, margin:0, fontFamily:F.body }}>{convo.name}</p>
@@ -943,7 +949,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
       )}
 
       {/* Header banner */}
-      <div style={{
+      <div className="sv-profile-banner" style={{
         background:`linear-gradient(135deg, ${T.purple} 0%, #8B3A5C 100%)`,
         borderRadius:24, padding:"24px 28px", marginBottom:32,
         display:"flex", alignItems:"center", gap:20, flexWrap:"wrap"
@@ -971,7 +977,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
           <p style={{ fontSize:12, color:"rgba(255,255,255,0.6)", fontFamily:F.body, fontWeight:500, marginBottom:14 }}>
             @{profile.handle}{profile.study ? ` · ${profile.study}` : ""}{profile.city ? `, ${profile.city}` : ""}
           </p>
-          <div style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
+          <div className="sv-profile-stats" style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
             {[[String(joinedAll.length),"Événements"],["12","Amis"],[String(created.length),"Créés"],[String(liked.length),"Favoris"]].map(([n,l])=>(
               <div key={l}>
                 <p style={{ fontSize:18, fontFamily:F.title, fontWeight:400, color:"#fff", margin:0 }}>{n}</p>
@@ -999,7 +1005,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
       </div>
 
       {/* Bio */}
-      <div style={{ background:T.card, borderRadius:16, padding:"20px 24px",
+      <div className="sv-profile-bio" style={{ background:T.card, borderRadius:16, padding:"20px 24px",
         border:`1px solid ${T.border}`, marginBottom:40 }}>
         <p style={{ fontSize:12, fontWeight:600, color:T.sec, fontFamily:F.body, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.06em" }}>À propos</p>
         <p style={{ fontSize:15, color:T.text, lineHeight:1.7, margin:0, fontFamily:F.body, fontWeight:400 }}>
@@ -1010,7 +1016,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
       {/* Mes créations */}
       <SectionTitle action={created.length > 3 ? "Voir tout" : null} onAction={() => navigate("home")}>Activités que j'ai créées</SectionTitle>
       {created.length > 0 ? (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, marginBottom:48 }}>
+        <div className="sv-ev-grid sv-ev-grid-3">
           {created.map((ev,i) => (
             <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
           ))}
@@ -1029,7 +1035,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
       {/* Favoris */}
       <SectionTitle>♥ Mes favoris</SectionTitle>
       {liked.length > 0 ? (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, marginBottom:48 }}>
+        <div className="sv-ev-grid sv-ev-grid-3">
           {liked.map((ev,i) => (
             <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
           ))}
@@ -1048,7 +1054,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
       {/* Upcoming */}
       <SectionTitle action={showAllUpcoming ? "Réduire" : "Voir tout"} onAction={() => setShowAllUpcoming(v => !v)}>Événements à venir</SectionTitle>
       {upcoming.length > 0 ? (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, marginBottom:48 }}>
+        <div className="sv-ev-grid sv-ev-grid-3">
           {upcoming.map((ev,i) => (
             <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
           ))}
@@ -1066,7 +1072,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
 
       {/* Past */}
       <SectionTitle>Événements passés</SectionTitle>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:16 }}>
+      <div className="sv-past-grid" style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:16 }}>
         {past.map((ev) => (
           <div key={ev.id} onClick={()=>navigate("detail",ev)} className="sv-past-card" style={{
             background:T.card, borderRadius:16, overflow:"hidden",
@@ -1296,7 +1302,7 @@ function CreateEventView({ navigate, currentUser, onCreated, editEvent }) {
           {isEdit ? "Mets à jour les informations de ton activité" : "Invite la communauté bordelaise à rejoindre ton activité"}
         </p>
 
-        <div style={{ background:T.card, borderRadius:20, padding:"36px",
+        <div className="sv-form-card" style={{ background:T.card, borderRadius:20, padding:"36px",
           border:`1px solid ${T.border}`, display:"flex", flexDirection:"column", gap:24 }}>
 
           {/* Image upload — uniquement en création */}
@@ -1351,7 +1357,7 @@ function CreateEventView({ navigate, currentUser, onCreated, editEvent }) {
 
           <Input label="Description" placeholder="Décris ton événement, le programme, ce qu'il faut apporter…" value={form.desc} onChange={set("desc")} textarea required />
 
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+          <div className="sv-form-dt" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
             <Input label="Date" type="date" value={form.date} onChange={set("date")} required />
             <Input label="Heure" type="time" value={form.time} onChange={set("time")} required />
           </div>
