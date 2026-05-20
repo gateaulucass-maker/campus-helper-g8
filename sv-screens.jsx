@@ -1132,17 +1132,14 @@ function CreateEventView({ navigate, currentUser, onCreated }) {
     setError(""); setLoading(true);
     try {
       const activity = await DB.createActivity(currentUser.id, form);
-      if (imageFile && activity?.id) {
-        try {
-          await DB.uploadEventImage(imageFile, activity.id);
-        } catch(imgErr) {
-          setError("Activité créée, mais l'image n'a pas pu être uploadée : " + (imgErr.message || String(imgErr)));
-          setLoading(false);
-          onCreated();
-          return;
-        }
-      }
+      setLoading(false);
       onCreated();
+      // Upload image en arrière-plan sans bloquer la navigation
+      if (imageFile && activity?.id) {
+        DB.uploadEventImage(imageFile, activity.id).catch(err => {
+          console.warn("Image upload failed:", err.message || err);
+        });
+      }
     } catch(e) {
       setError(e.message || "Erreur lors de la publication.");
       setLoading(false);
