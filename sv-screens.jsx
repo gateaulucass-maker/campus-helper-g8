@@ -350,6 +350,10 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
   const liked = !!ev.liked;
   const [imgSrc, setImgSrc] = React.useState(ev.img);
   const [uploadingImg, setUploadingImg] = React.useState(false);
+  const [cropping, setCropping] = React.useState(false);
+  const [imgPos, setImgPos] = React.useState(ev.imgPosition || "50% 50%");
+  const [savingPos, setSavingPos] = React.useState(false);
+  const dragRef = React.useRef(null);
 
   const handleImageEdit = async (e) => {
     const file = e.target.files[0];
@@ -360,6 +364,35 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
       if (url) setImgSrc(url);
     } catch(err) { console.warn("Photo update failed:", err); }
     setUploadingImg(false);
+  };
+
+  const startCrop = (e) => {
+    const startX = e.clientX, startY = e.clientY;
+    const parts = imgPos.split(" ");
+    const startPx = parseFloat(parts[0]) || 50;
+    const startPy = parseFloat(parts[1]) || 50;
+    const onMove = (me) => {
+      const dx = me.clientX - startX;
+      const dy = me.clientY - startY;
+      const nx = Math.max(0, Math.min(100, startPx - dx * 0.15));
+      const ny = Math.max(0, Math.min(100, startPy - dy * 0.15));
+      setImgPos(`${nx.toFixed(1)}% ${ny.toFixed(1)}%`);
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  const savePosition = async () => {
+    setSavingPos(true);
+    try {
+      await DB.updateActivityImagePosition(ev.id, imgPos);
+      setCropping(false);
+    } catch(err) { console.warn("Position save failed:", err); }
+    setSavingPos(false);
   };
 
   const infoItems = [
@@ -378,21 +411,59 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
       }}>← Retour</button>
 
       <div style={{ borderRadius:24, overflow:"hidden", height:400, marginBottom:40, position:"relative" }}>
-        <img src={imgSrc} alt={ev.title} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-        {ev.createdByMe && (
-          <label style={{
-            position:"absolute", bottom:16, right:16,
-            background:"rgba(0,0,0,0.55)", color:"#fff",
-            borderRadius:12, padding:"9px 16px",
-            fontFamily:F.body, fontWeight:600, fontSize:13,
-            cursor: uploadingImg ? "wait" : "pointer",
-            display:"flex", alignItems:"center", gap:8,
-            backdropFilter:"blur(4px)"
+        <img src={imgSrc} alt={ev.title}
+          style={{ width:"100%", height:"100%", objectFit:"cover", objectPosition: imgPos,
+            cursor: cropping ? "grab" : "default", userSelect:"none" }}
+          onMouseDown={cropping ? startCrop : undefined}
+        />
+        {/* Overlay recadrage */}
+        {cropping && (
+          <div style={{
+            position:"absolute", inset:0,
+            background:"rgba(0,0,0,0.35)", display:"flex",
+            flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12
           }}>
-            {uploadingImg ? "Upload…" : "📷 Modifier la photo"}
-            <input type="file" accept="image/*" style={{ display:"none" }}
-              onChange={handleImageEdit} disabled={uploadingImg} />
-          </label>
+            <p style={{ color:"#fff", fontFamily:F.body, fontWeight:600, fontSize:14,
+              background:"rgba(0,0,0,0.5)", borderRadius:10, padding:"8px 16px" }}>
+              Glisse l'image pour recadrer
+            </p>
+            <div style={{ display:"flex", gap:10 }}>
+              <button onClick={() => { setCropping(false); setImgPos(ev.imgPosition || "50% 50%"); }}
+                style={{ padding:"9px 20px", borderRadius:12, border:"none", background:"rgba(255,255,255,0.2)",
+                  color:"#fff", fontFamily:F.body, fontWeight:600, fontSize:13, cursor:"pointer" }}>
+                Annuler
+              </button>
+              <button onClick={savePosition} disabled={savingPos}
+                style={{ padding:"9px 20px", borderRadius:12, border:"none", background:T.coral,
+                  color:"#fff", fontFamily:F.body, fontWeight:700, fontSize:13, cursor:"pointer",
+                  opacity: savingPos ? 0.7 : 1 }}>
+                {savingPos ? "Sauvegarde…" : "✓ Enregistrer"}
+              </button>
+            </div>
+          </div>
+        )}
+        {/* Boutons créateur */}
+        {ev.createdByMe && !cropping && (
+          <div style={{ position:"absolute", bottom:16, right:16, display:"flex", gap:8 }}>
+            <button onClick={() => setCropping(true)} style={{
+              background:"rgba(0,0,0,0.55)", color:"#fff",
+              borderRadius:12, padding:"9px 16px", border:"none",
+              fontFamily:F.body, fontWeight:600, fontSize:13, cursor:"pointer",
+              backdropFilter:"blur(4px)"
+            }}>✂️ Recadrer</button>
+            <label style={{
+              background:"rgba(0,0,0,0.55)", color:"#fff",
+              borderRadius:12, padding:"9px 16px",
+              fontFamily:F.body, fontWeight:600, fontSize:13,
+              cursor: uploadingImg ? "wait" : "pointer",
+              display:"flex", alignItems:"center", gap:8,
+              backdropFilter:"blur(4px)"
+            }}>
+              {uploadingImg ? "Upload…" : "📷 Modifier"}
+              <input type="file" accept="image/*" style={{ display:"none" }}
+                onChange={handleImageEdit} disabled={uploadingImg} />
+            </label>
+          </div>
         )}
       </div>
 

@@ -214,7 +214,7 @@ function EventCard({ ev, idx=0, onClick, onLike }) {
       }}>
       <div className="sv-card-img-wrap" style={{ position:"relative", paddingTop:"56%" }}>
         <img src={ev.img} alt={ev.title} className="sv-card-img"
-          style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} />
+          style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", objectPosition: ev.imgPosition || "50% 50%" }} />
         <div style={{ position:"absolute", top:12, left:12 }}>
           <Badge>{ev.cat}</Badge>
         </div>
@@ -270,7 +270,7 @@ function EventCardHorizontal({ ev, idx=0, onClick, onLike }) {
       }}>
       <div style={{ width:140, flexShrink:0, position:"relative", overflow:"hidden" }}>
         <img src={ev.img} alt={ev.title} className="sv-card-img"
-          style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+          style={{ width:"100%", height:"100%", objectFit:"cover", objectPosition: ev.imgPosition || "50% 50%" }} />
         <div style={{ position:"absolute", top:8, left:8 }}>
           <Badge>{ev.cat}</Badge>
         </div>

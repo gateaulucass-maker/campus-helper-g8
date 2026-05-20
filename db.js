@@ -170,6 +170,7 @@ const DB = (() => {
         participants: registrations.length,
         past:         actDate ? actDate < now : false,
         createdByMe:  a.creator_id === currentUserId,
+        imgPosition:  a.image_position || "50% 50%",
       };
     });
   }
@@ -207,10 +208,18 @@ const DB = (() => {
     return data || [];
   }
 
+  async function updateActivityImagePosition(activityId, position) {
+    const { error } = await s.from("activities")
+      .update({ image_position: position })
+      .eq("id", activityId);
+    if (error) throw error;
+  }
+
   return {
     signUp, signIn, signOut, getSession, onAuthChange,
     getProfile, updateProfile, uploadAvatar, uploadEventImage,
     createActivity, joinActivity, leaveActivity, getActivities,
+    updateActivityImagePosition,
     sendChatMessage, getChatMessages, getAllChatMessages,
   };
 })();
