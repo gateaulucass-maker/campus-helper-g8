@@ -560,6 +560,7 @@ function App() {
             navigate={navigate}
             currentUser={currentUser}
             onCreated={() => { loadEvents(currentUser.id); navigate("home"); }}
+            onRefreshEvents={() => loadEvents(currentUser.id)}
           />
         )}
         {screen==="edit" && editingEvent && (
@@ -568,6 +569,7 @@ function App() {
             currentUser={currentUser}
             editEvent={editingEvent}
             onCreated={() => { loadEvents(currentUser.id); navigate(-1); }}
+            onRefreshEvents={() => loadEvents(currentUser.id)}
           />
         )}
       </main>

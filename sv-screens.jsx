@@ -1249,7 +1249,7 @@ function AuthView({ onLogin }) {
 
 // ── CREATE EVENT VIEW ──────────────────────────────────────
 // Props: navigate, currentUser (objet Supabase), onCreated (callback après succès)
-function CreateEventView({ navigate, currentUser, onCreated, editEvent }) {
+function CreateEventView({ navigate, currentUser, onCreated, onRefreshEvents, editEvent }) {
   const isEdit = !!editEvent;
 
   // Préremplissage si mode édition
@@ -1288,17 +1288,17 @@ function CreateEventView({ navigate, currentUser, onCreated, editEvent }) {
     setError(""); setLoading(true);
     try {
       const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Délai dépassé — vérifie ta connexion et réessaie.")), 15000)
+        setTimeout(() => reject(new Error("Délai dépassé — vérifie ta connexion et réessaie.")), 8000)
       );
       if (isEdit) {
         await Promise.race([DB.updateActivity(editEvent.id, form), timeout]);
       } else {
         const activity = await Promise.race([DB.createActivity(currentUser.id, form), timeout]);
+        // Upload en arrière-plan : ne bloque pas la navigation
         if (imageFile && activity?.id) {
-          await Promise.race([
-            DB.uploadEventImage(imageFile, activity.id),
-            new Promise(resolve => setTimeout(resolve, 15000)),
-          ]).catch(err => console.warn("Image upload:", err.message || err));
+          DB.uploadEventImage(imageFile, activity.id)
+            .then(() => onRefreshEvents && onRefreshEvents())
+            .catch(err => console.warn("Image upload:", err.message || err));
         }
       }
     } catch(e) {
