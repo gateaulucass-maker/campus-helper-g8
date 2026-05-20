@@ -171,6 +171,7 @@ const DB = (() => {
         past:         actDate ? actDate < now : false,
         createdByMe:  a.creator_id === currentUserId,
         imgPosition:  a.image_position || "50% 50%",
+        rawDate:      a.activity_date || null,
       };
     });
   }
@@ -208,6 +209,20 @@ const DB = (() => {
     return data || [];
   }
 
+  async function updateActivity(activityId, form) {
+    const activityDate = (form.date && form.time)
+      ? new Date(`${form.date}T${form.time}`).toISOString()
+      : null;
+    const { error } = await s.from("activities").update({
+      title:         form.title,
+      description:   form.desc,
+      category:      form.cat,
+      location:      form.address ? `${form.loc} — ${form.address}` : form.loc,
+      activity_date: activityDate,
+    }).eq("id", activityId);
+    if (error) throw error;
+  }
+
   async function updateActivityImagePosition(activityId, position) {
     const { error } = await s.from("activities")
       .update({ image_position: position })
@@ -218,7 +233,7 @@ const DB = (() => {
   return {
     signUp, signIn, signOut, getSession, onAuthChange,
     getProfile, updateProfile, uploadAvatar, uploadEventImage,
-    createActivity, joinActivity, leaveActivity, getActivities,
+    createActivity, updateActivity, joinActivity, leaveActivity, getActivities,
     updateActivityImagePosition,
     sendChatMessage, getChatMessages, getAllChatMessages,
   };

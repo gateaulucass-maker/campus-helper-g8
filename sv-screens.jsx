@@ -343,7 +343,7 @@ function ReviewSection({ eventId }) {
 }
 
 // ── EVENT DETAIL ───────────────────────────────────────────
-function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdateImage }) {
+function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdateImage, onEdit }) {
   const idx = EVENTS_DATA.findIndex(e => e.id === ev.id);
   const parts = PCOUNT[idx >= 0 ? idx : 0];
   const [joined, setJoined] = React.useState(ev.joined);
@@ -404,11 +404,21 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
 
   return (
     <div style={{ paddingBottom:64 }}>
-      <button onClick={() => navigate(-1)} style={{
-        display:"flex", alignItems:"center", gap:8, marginBottom:24,
-        color:T.sec, background:"none", border:"none", cursor:"pointer",
-        fontFamily:F.body, fontWeight:600, fontSize:14
-      }}>← Retour</button>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+        <button onClick={() => navigate(-1)} style={{
+          display:"flex", alignItems:"center", gap:8,
+          color:T.sec, background:"none", border:"none", cursor:"pointer",
+          fontFamily:F.body, fontWeight:600, fontSize:14
+        }}>← Retour</button>
+        {ev.createdByMe && onEdit && (
+          <button onClick={() => onEdit(ev)} style={{
+            display:"flex", alignItems:"center", gap:8,
+            background:T.card, border:`1.5px solid ${T.border}`,
+            borderRadius:12, padding:"9px 18px", cursor:"pointer",
+            fontFamily:F.body, fontWeight:700, fontSize:13, color:T.text
+          }}>✏️ Modifier l'activité</button>
+        )}
+      </div>
 
       <div style={{ borderRadius:24, overflow:"hidden", height:400, marginBottom:40, position:"relative" }}>
         <img src={imgSrc} alt={ev.title}
@@ -1209,8 +1219,25 @@ function AuthView({ onLogin }) {
 
 // ── CREATE EVENT VIEW ──────────────────────────────────────
 // Props: navigate, currentUser (objet Supabase), onCreated (callback après succès)
-function CreateEventView({ navigate, currentUser, onCreated }) {
-  const [form, setForm]       = React.useState({title:"",desc:"",date:"",time:"",loc:"",address:"",cat:"Révisions"});
+function CreateEventView({ navigate, currentUser, onCreated, editEvent }) {
+  const isEdit = !!editEvent;
+
+  // Préremplissage si mode édition
+  const initForm = () => {
+    if (!isEdit) return {title:"",desc:"",date:"",time:"",loc:"",address:"",cat:"Révisions"};
+    const parts = (editEvent.loc || "").split(" — ");
+    let date = "", time = "";
+    if (editEvent.rawDate) {
+      const d = new Date(editEvent.rawDate);
+      date = d.toISOString().slice(0, 10);
+      time = d.toTimeString().slice(0, 5);
+    }
+    return { title: editEvent.title || "", desc: editEvent.desc || "",
+      cat: editEvent.cat || "Révisions", loc: parts[0] || "",
+      address: parts[1] || "", date, time };
+  };
+
+  const [form, setForm]       = React.useState(initForm);
   const [loading, setLoading]   = React.useState(false);
   const [error, setError]     = React.useState("");
   const [imageFile, setImageFile] = React.useState(null);
@@ -1229,25 +1256,26 @@ function CreateEventView({ navigate, currentUser, onCreated }) {
   const handlePublish = async () => {
     if (!form.title.trim()) { setError("Le titre est requis."); return; }
     setError(""); setLoading(true);
-    let activity = null;
     try {
       const timeout = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Délai dépassé — vérifie ta connexion et réessaie.")), 15000)
       );
-      activity = await Promise.race([DB.createActivity(currentUser.id, form), timeout]);
+      if (isEdit) {
+        await Promise.race([DB.updateActivity(editEvent.id, form), timeout]);
+      } else {
+        const activity = await Promise.race([DB.createActivity(currentUser.id, form), timeout]);
+        if (imageFile && activity?.id) {
+          await Promise.race([
+            DB.uploadEventImage(imageFile, activity.id),
+            new Promise(resolve => setTimeout(resolve, 15000)),
+          ]).catch(err => console.warn("Image upload:", err.message || err));
+        }
+      }
     } catch(e) {
-      setError(e.message || String(e) || "Erreur lors de la création.");
+      setError(e.message || String(e) || "Erreur.");
       setLoading(false);
       return;
     }
-
-    if (imageFile && activity?.id) {
-      await Promise.race([
-        DB.uploadEventImage(imageFile, activity.id),
-        new Promise(resolve => setTimeout(resolve, 15000)),
-      ]).catch(err => console.warn("Image upload:", err.message || err));
-    }
-
     setLoading(false);
     onCreated();
   };
@@ -1262,17 +1290,17 @@ function CreateEventView({ navigate, currentUser, onCreated }) {
 
       <div style={{ maxWidth:720, margin:"0 auto" }}>
         <h1 style={{ fontSize:28, fontFamily:F.title, fontWeight:400, color:T.text, marginBottom:8 }}>
-          Créer un événement
+          {isEdit ? "Modifier l'activité" : "Créer un événement"}
         </h1>
         <p style={{ fontSize:15, color:T.sec, fontFamily:F.body, marginBottom:36, fontWeight:400 }}>
-          Invite la communauté bordelaise à rejoindre ton activité
+          {isEdit ? "Mets à jour les informations de ton activité" : "Invite la communauté bordelaise à rejoindre ton activité"}
         </p>
 
         <div style={{ background:T.card, borderRadius:20, padding:"36px",
           border:`1px solid ${T.border}`, display:"flex", flexDirection:"column", gap:24 }}>
 
-          {/* Image upload */}
-          <div>
+          {/* Image upload — uniquement en création */}
+          {!isEdit && <div>
             <label style={{ fontSize:13, fontWeight:600, color:T.text, fontFamily:F.body, display:"block", marginBottom:8 }}>
               Image de l'événement
             </label>
@@ -1299,7 +1327,7 @@ function CreateEventView({ navigate, currentUser, onCreated }) {
                 <input type="file" accept="image/*" style={{ display:"none" }} onChange={handleImageChange} />
               </label>
             )}
-          </div>
+          </div>}
 
           <Input label="Titre de l'événement" placeholder="Ex : Session révisions droit constitutionnel" value={form.title} onChange={set("title")} required />
 
@@ -1344,7 +1372,7 @@ function CreateEventView({ navigate, currentUser, onCreated }) {
               border:"none", borderRadius:14, fontFamily:F.body,
               fontWeight:700, fontSize:16, cursor: loading ? "not-allowed" : "pointer",
               boxShadow:"0 4px 16px rgba(251,99,118,0.3)", opacity: loading ? 0.7 : 1
-            }}>{loading ? "Publication…" : "✨ Publier l'événement"}</button>
+            }}>{loading ? "Enregistrement…" : isEdit ? "✏️ Enregistrer les modifications" : "✨ Publier l'événement"}</button>
             <button onClick={()=>navigate(-1)} style={{
               padding:"15px 24px", background:"transparent", color:T.sec,
               border:`1.5px solid ${T.border}`, borderRadius:14,
