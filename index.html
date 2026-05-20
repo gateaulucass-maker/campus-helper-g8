@@ -405,6 +405,10 @@ function App() {
     }
   }
 
+  // Ref pour accéder à l'userId courant dans le setInterval sans capturer une closure stale
+  const currentUserRef = React.useRef(null);
+  useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
+
   // ── Vérification de session au démarrage + écoute des changements auth
   useEffect(() => {
     DB.getSession().then(async session => {
@@ -426,12 +430,21 @@ function App() {
       } else {
         setCurrentUser(null);
         setEvents([]);
-        setConvos([]); // important : on vide les convos quand on se déconnecte
+        setConvos([]);
         setActiveConvoId(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Rafraîchissement automatique toutes les 2 minutes
+    const refreshInterval = setInterval(() => {
+      const uid = currentUserRef.current?.id;
+      if (uid) loadEvents(uid);
+    }, 2 * 60 * 1000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(refreshInterval);
+    };
   }, []);
 
   const handleLogin = (user) => {
