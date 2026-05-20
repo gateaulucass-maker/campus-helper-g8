@@ -1133,7 +1133,14 @@ function CreateEventView({ navigate, currentUser, onCreated }) {
     try {
       const activity = await DB.createActivity(currentUser.id, form);
       if (imageFile && activity?.id) {
-        try { await DB.uploadEventImage(imageFile, activity.id); } catch(imgErr) { console.warn("Image upload failed:", imgErr); }
+        try {
+          await DB.uploadEventImage(imageFile, activity.id);
+        } catch(imgErr) {
+          setError("Activité créée, mais l'image n'a pas pu être uploadée : " + (imgErr.message || String(imgErr)));
+          setLoading(false);
+          onCreated();
+          return;
+        }
       }
       onCreated();
     } catch(e) {
