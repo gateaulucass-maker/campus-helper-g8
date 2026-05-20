@@ -887,7 +887,7 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
 
 // ── PROFILE VIEW ───────────────────────────────────────────
 function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUpload }) {
-  const [showAllUpcoming, setShowAllUpcoming] = React.useState(false);
+  const [showAllParticipating, setShowAllParticipating] = React.useState(false);
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(profile);
   const [uploadingAvatar, setUploadingAvatar] = React.useState(false);
@@ -907,8 +907,8 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
   };
 
 
-  const joinedAll = events.filter(e => e.joined && !e.past);
-  const upcoming = showAllUpcoming ? joinedAll : joinedAll.slice(0,3);
+  const participating = events.filter(e => e.joined);
+  const participatingVisible = showAllParticipating ? participating : participating.slice(0, 6);
   const past = events.filter(e => e.past);
   const liked = events.filter(e => e.liked);
   const created = events.filter(e => e.createdByMe);
@@ -1011,7 +1011,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
             @{profile.handle}{profile.study ? ` · ${profile.study}` : ""}{profile.city ? `, ${profile.city}` : ""}
           </p>
           <div className="sv-profile-stats" style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
-            {[[String(joinedAll.length),"Événements"],["12","Amis"],[String(created.length),"Créés"],[String(liked.length),"Favoris"]].map(([n,l])=>(
+            {[[String(participating.length),"Participations"],["12","Amis"],[String(created.length),"Créés"],[String(liked.length),"Favoris"]].map(([n,l])=>(
               <div key={l}>
                 <p style={{ fontSize:18, fontFamily:F.title, fontWeight:400, color:"#fff", margin:0 }}>{n}</p>
                 <p style={{ fontSize:11, color:"rgba(255,255,255,0.55)", fontFamily:F.body, margin:0 }}>{l}</p>
@@ -1076,11 +1076,11 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
         </div>
       )}
 
-      {/* Upcoming */}
-      <SectionTitle action={showAllUpcoming ? "Réduire" : "Voir tout"} onAction={() => setShowAllUpcoming(v => !v)}>Événements à venir</SectionTitle>
-      {upcoming.length > 0 ? (
+      {/* Participations */}
+      <SectionTitle action={participating.length > 6 ? (showAllParticipating ? "Réduire" : "Voir tout") : null} onAction={() => setShowAllParticipating(v => !v)}>Mes participations</SectionTitle>
+      {participating.length > 0 ? (
         <div className="sv-ev-grid sv-ev-grid-3">
-          {upcoming.map((ev,i) => (
+          {participatingVisible.map((ev,i) => (
             <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
           ))}
         </div>
@@ -1089,7 +1089,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
           background:T.card, borderRadius:16, marginBottom:48, border:`1px solid ${T.border}`,
           display:"flex", alignItems:"center", gap:16 }}>
           <p style={{ fontWeight:500, fontFamily:F.body, margin:0, fontSize:14 }}>
-            Aucun événement à venir. Rejoins une activité depuis l'accueil !
+            Tu ne participes à aucun événement pour l'instant. Rejoins une activité depuis l'accueil !
           </p>
         </div>
       )}
