@@ -69,8 +69,15 @@ const DB = (() => {
     const { error: upErr } = await s.storage.from("activity-images").upload(path, file, { upsert: true });
     if (upErr) throw upErr;
     const { data } = s.storage.from("activity-images").getPublicUrl(path);
-    const { error: updErr } = await s.from("activities").update({ image_url: data.publicUrl }).eq("id", activityId);
+    const { data: rows, error: updErr } = await s
+      .from("activities")
+      .update({ image_url: data.publicUrl })
+      .eq("id", activityId)
+      .select("id");
     if (updErr) throw updErr;
+    if (!rows || rows.length === 0) {
+      throw new Error("Politique RLS UPDATE manquante sur la table activities — l'image ne peut pas être sauvegardée.");
+    }
     return data.publicUrl;
   }
 
