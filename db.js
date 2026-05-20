@@ -157,7 +157,11 @@ const DB = (() => {
         loc:          a.location || "",
         address:      "",
         date:         actDate
-          ? actDate.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })
+          ? actDate.toLocaleDateString("fr-FR",
+              actDate.getFullYear() !== now.getFullYear()
+                ? { weekday: "short", day: "numeric", month: "short", year: "numeric" }
+                : { weekday: "short", day: "numeric", month: "short" }
+            )
           : "",
         time:         actDate
           ? actDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
