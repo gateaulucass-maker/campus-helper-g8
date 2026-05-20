@@ -230,10 +230,18 @@ const DB = (() => {
     if (error) throw error;
   }
 
+  async function deleteActivity(activityId) {
+    // Remove dependent rows first to avoid FK violations
+    await s.from("activity_registrations").delete().eq("activity_id", activityId);
+    await s.from("chat_messages").delete().eq("activity_id", activityId);
+    const { error } = await s.from("activities").delete().eq("id", activityId);
+    if (error) throw error;
+  }
+
   return {
     signUp, signIn, signOut, getSession, onAuthChange,
     getProfile, updateProfile, uploadAvatar, uploadEventImage,
-    createActivity, updateActivity, joinActivity, leaveActivity, getActivities,
+    createActivity, updateActivity, deleteActivity, joinActivity, leaveActivity, getActivities,
     updateActivityImagePosition,
     sendChatMessage, getChatMessages, getAllChatMessages,
   };

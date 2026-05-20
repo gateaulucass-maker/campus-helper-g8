@@ -548,6 +548,11 @@ function App() {
               loadEvents(currentUser.id);
               setSelectedEvent(ev => ev?.id === id ? {...ev, img: url} : ev);
               return url;
+            }}
+            onDelete={async (id) => {
+              await DB.deleteActivity(id);
+              await loadEvents(currentUser.id);
+              navigate("home");
             }} />
         )}
         {screen==="create" && (

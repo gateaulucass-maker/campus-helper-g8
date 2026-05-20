@@ -343,7 +343,7 @@ function ReviewSection({ eventId }) {
 }
 
 // ── EVENT DETAIL ───────────────────────────────────────────
-function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdateImage, onEdit }) {
+function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdateImage, onEdit, onDelete }) {
   const idx = EVENTS_DATA.findIndex(e => e.id === ev.id);
   const parts = PCOUNT[idx >= 0 ? idx : 0];
   const [joined, setJoined] = React.useState(ev.joined);
@@ -353,6 +353,8 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
   const [cropping, setCropping] = React.useState(false);
   const [imgPos, setImgPos] = React.useState(ev.imgPosition || "50% 50%");
   const [savingPos, setSavingPos] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
   const dragRef = React.useRef(null);
 
   const handleImageEdit = async (e) => {
@@ -404,19 +406,54 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
 
   return (
     <div style={{ paddingBottom:64 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24, gap:10, flexWrap:"wrap" }}>
         <button onClick={() => navigate(-1)} style={{
           display:"flex", alignItems:"center", gap:8,
           color:T.sec, background:"none", border:"none", cursor:"pointer",
           fontFamily:F.body, fontWeight:600, fontSize:14
         }}>← Retour</button>
-        {ev.createdByMe && onEdit && (
-          <button onClick={() => onEdit(ev)} style={{
-            display:"flex", alignItems:"center", gap:8,
-            background:T.card, border:`1.5px solid ${T.border}`,
-            borderRadius:12, padding:"9px 18px", cursor:"pointer",
-            fontFamily:F.body, fontWeight:700, fontSize:13, color:T.text
-          }}>✏️ Modifier l'activité</button>
+
+        {ev.createdByMe && (
+          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+            {onEdit && (
+              <button onClick={() => onEdit(ev)} style={{
+                display:"flex", alignItems:"center", gap:6,
+                background:T.card, border:`1.5px solid ${T.border}`,
+                borderRadius:12, padding:"9px 16px", cursor:"pointer",
+                fontFamily:F.body, fontWeight:700, fontSize:13, color:T.text
+              }}>✏️ Modifier</button>
+            )}
+            {onDelete && !confirmDelete && (
+              <button onClick={() => setConfirmDelete(true)} style={{
+                display:"flex", alignItems:"center", gap:6,
+                background:"#FDE8EC", border:"1.5px solid #FB6376",
+                borderRadius:12, padding:"9px 16px", cursor:"pointer",
+                fontFamily:F.body, fontWeight:700, fontSize:13, color:"#E84D62"
+              }}>🗑 Supprimer</button>
+            )}
+            {confirmDelete && (
+              <div style={{ display:"flex", gap:8, alignItems:"center",
+                background:T.card, border:`1.5px solid ${T.border}`,
+                borderRadius:12, padding:"8px 14px" }}>
+                <span style={{ fontSize:13, fontFamily:F.body, color:T.text, fontWeight:600 }}>
+                  Supprimer définitivement ?
+                </span>
+                <button onClick={async () => {
+                  setDeleting(true);
+                  try { await onDelete(ev.id); } catch(e) { console.error(e); setDeleting(false); setConfirmDelete(false); }
+                }} disabled={deleting} style={{
+                  background:"#E84D62", color:"#fff", border:"none", borderRadius:10,
+                  padding:"7px 14px", fontFamily:F.body, fontWeight:700, fontSize:12,
+                  cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.7 : 1
+                }}>{deleting ? "…" : "Oui, supprimer"}</button>
+                <button onClick={() => setConfirmDelete(false)} style={{
+                  background:"none", border:`1.5px solid ${T.border}`, borderRadius:10,
+                  padding:"7px 12px", fontFamily:F.body, fontWeight:600, fontSize:12,
+                  cursor:"pointer", color:T.sec
+                }}>Annuler</button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
