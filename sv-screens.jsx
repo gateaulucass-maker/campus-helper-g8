@@ -110,33 +110,68 @@ function HomeView({ events, navigate, onLike, profile }) {
       </div>
 
       {/* ── RESULTS ── */}
-      {hasFilter ? (
-        // Unified results when searching or filtering
-        <>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-            <h2 style={{ fontSize:20, fontFamily:F.title, fontWeight:400, color:T.text, margin:0 }}>
-              {filtered.length} événement{filtered.length!==1?"s":""} trouvé{filtered.length!==1?"s":""}
-            </h2>
-            <p style={{ fontSize:13, color:T.sec, fontFamily:F.body, margin:0 }}>
-              {query && `"${query}"`}{query && activeCat!=="Tous" && " · "}{activeCat!=="Tous" && activeCat}
-            </p>
-          </div>
-          {filtered.length > 0 ? (
-            <div className="sv-ev-grid sv-ev-grid-3">
-              {filtered.map((ev,i) => (
-                <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
-              ))}
-            </div>
-          ) : (
-            <div style={{ textAlign:"center", padding:"72px 0", color:T.sec }}>
-              <p style={{ fontWeight:700, fontSize:15, fontFamily:F.body, margin:"0 0 8px", color:T.text }}>Aucun résultat</p>
-              <p style={{ fontSize:14, fontFamily:F.body, margin:0 }}>
-                Essaie une autre catégorie ou un autre mot-clé
+      {hasFilter ? (() => {
+        // Tri chronologique : à venir d'abord (du plus proche), passés ensuite (du plus récent)
+        const upcoming = filtered.filter(e => !e.past);
+        const past     = filtered.filter(e =>  e.past).reverse();
+        const total    = upcoming.length + past.length;
+        return (
+          <>
+            {/* Header */}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+              <h2 style={{ fontSize:20, fontFamily:F.title, fontWeight:400, color:T.text, margin:0 }}>
+                {total} événement{total!==1?"s":""}
+              </h2>
+              <p style={{ fontSize:13, color:T.sec, fontFamily:F.body, margin:0 }}>
+                {query && `"${query}"`}{query && activeCat!=="Tous" && " · "}{activeCat!=="Tous" && activeCat}
               </p>
             </div>
-          )}
-        </>
-      ) : (
+
+            {total === 0 && (
+              <div style={{ textAlign:"center", padding:"72px 0", color:T.sec }}>
+                <p style={{ fontWeight:700, fontSize:15, fontFamily:F.body, margin:"0 0 8px", color:T.text }}>Aucun résultat</p>
+                <p style={{ fontSize:14, fontFamily:F.body, margin:0 }}>Essaie une autre catégorie ou un autre mot-clé</p>
+              </div>
+            )}
+
+            {/* Événements à venir — couleur */}
+            {upcoming.length > 0 && (
+              <>
+                {past.length > 0 && (
+                  <p style={{ fontSize:12, fontWeight:700, color:T.sec, fontFamily:F.body,
+                    textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:16 }}>
+                    À venir · {upcoming.length}
+                  </p>
+                )}
+                <div className="sv-ev-grid sv-ev-grid-3">
+                  {upcoming.map((ev,i) => (
+                    <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Événements passés — grisés, séparateur */}
+            {past.length > 0 && (
+              <>
+                <div style={{ display:"flex", alignItems:"center", gap:14, margin:"36px 0 20px" }}>
+                  <div style={{ flex:1, height:1, background:T.border }} />
+                  <span style={{ fontSize:12, fontWeight:700, color:T.sec, fontFamily:F.body,
+                    textTransform:"uppercase", letterSpacing:"0.07em", whiteSpace:"nowrap" }}>
+                    Passés · {past.length}
+                  </span>
+                  <div style={{ flex:1, height:1, background:T.border }} />
+                </div>
+                <div className="sv-ev-grid sv-ev-grid-3" style={{ opacity:0.5, filter:"saturate(0.4)" }}>
+                  {past.map((ev,i) => (
+                    <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        );
+      })() : (
         // Default home layout
         <>
           <SectionTitle action={showAllActu ? "Réduire" : "Voir tout"} onAction={() => setShowAllActu(v => !v)}>Actualité</SectionTitle>
