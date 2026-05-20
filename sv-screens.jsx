@@ -29,7 +29,7 @@ function HomeView({ events, navigate, onLike, profile }) {
       }}>
         {/* Greeting + title */}
         <p className="sv-hero-greeting" style={{ fontSize:14, color:"rgba(255,255,255,0.55)", fontFamily:F.body, fontWeight:600, marginBottom:10, textAlign:"center" }}>
-          Bonjour {profile ? profile.name.split(" ")[0] : "toi"} 👋
+          Bonjour {profile ? profile.name.split(" ")[0] : "toi"}
         </p>
         <h1 className="sv-hero-title" style={{ fontSize:38, fontFamily:F.title, fontWeight:400, color:"#fff", margin:"0 0 6px", lineHeight:1.2, textAlign:"center" }}>
           Événements à Bordeaux
@@ -48,7 +48,6 @@ function HomeView({ events, navigate, onLike, profile }) {
               ? "0 0 0 3px rgba(251,99,118,0.35), 0 8px 32px rgba(0,0,0,0.18)"
               : "0 8px 32px rgba(0,0,0,0.18)",
           }}>
-            <span style={{ fontSize:18, opacity:0.35, flexShrink:0 }}>🔍</span>
             <input
               value={query}
               onChange={e => setQuery(e.target.value)}
@@ -179,7 +178,6 @@ function SearchView({ events, navigate, onLike }) {
         border:`2px solid ${focused ? T.coral : T.border}`,
         boxShadow:"0 2px 12px rgba(93,42,66,0.06)", transition:"border 0.2s"
       }}>
-        <span style={{ fontSize:18, opacity:0.35 }}>🔍</span>
         <input value={query} onChange={e=>setQuery(e.target.value)}
           onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
           placeholder="Événement, lieu, catégorie…"
@@ -194,8 +192,8 @@ function SearchView({ events, navigate, onLike }) {
 
       {!query && (
         <div style={{ display:"flex", gap:8, marginBottom:32, flexWrap:"wrap" }}>
-          {["🎓 Révisions","☕ Coworking","🎵 Musique","🏄 Sport","🌙 Sortie"].map(t => (
-            <button key={t} onClick={()=>setQuery(t.split(" ")[1])} style={{
+          {["Révisions","Coworking","Musique","Sport","Sortie"].map(t => (
+            <button key={t} onClick={()=>setQuery(t)} style={{
               background:T.card, border:`1.5px solid ${T.border}`, borderRadius:50,
               padding:"7px 16px", fontWeight:600, fontSize:13, color:T.text,
               cursor:"pointer", fontFamily:F.body
@@ -256,7 +254,7 @@ function ReviewSection({ eventId }) {
         {avgStars && (
           <div style={{ display:"flex", alignItems:"center", gap:6,
             background:T.muted, borderRadius:20, padding:"4px 12px", border:`1px solid ${T.border}` }}>
-            <span style={{ fontSize:14 }}>⭐</span>
+            <span style={{ fontSize:14 }}>★</span>
             <span style={{ fontWeight:700, fontSize:14, color:T.text, fontFamily:F.body }}>{avgStars}</span>
             <span style={{ fontSize:12, color:T.sec, fontFamily:F.body }}>({reviews.length})</span>
           </div>
@@ -292,7 +290,6 @@ function ReviewSection({ eventId }) {
       {submitted ? (
         <div style={{ background:"#F0FDF4", borderRadius:14, padding:"16px 20px",
           border:"1px solid #BBF7D0", display:"flex", alignItems:"center", gap:10 }}>
-          <span style={{ fontSize:20 }}>✅</span>
           <p style={{ margin:0, fontWeight:600, fontSize:14, color:"#059669", fontFamily:F.body }}>
             Merci pour ton avis !
           </p>
@@ -421,7 +418,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
                 background:T.card, border:`1.5px solid ${T.border}`,
                 borderRadius:12, padding:"9px 16px", cursor:"pointer",
                 fontFamily:F.body, fontWeight:700, fontSize:13, color:T.text
-              }}>✏️ Modifier</button>
+              }}>Modifier</button>
             )}
             {onDelete && !confirmDelete && (
               <button onClick={() => setConfirmDelete(true)} style={{
@@ -429,7 +426,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
                 background:"#FDE8EC", border:"1.5px solid #FB6376",
                 borderRadius:12, padding:"9px 16px", cursor:"pointer",
                 fontFamily:F.body, fontWeight:700, fontSize:13, color:"#E84D62"
-              }}>🗑 Supprimer</button>
+              }}>Supprimer</button>
             )}
             {confirmDelete && (
               <div style={{ display:"flex", gap:8, alignItems:"center",
@@ -497,7 +494,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
               borderRadius:12, padding:"9px 16px", border:"none",
               fontFamily:F.body, fontWeight:600, fontSize:13, cursor:"pointer",
               backdropFilter:"blur(4px)"
-            }}>✂️ Recadrer</button>
+            }}>Recadrer</button>
             <label style={{
               background:"rgba(0,0,0,0.55)", color:"#fff",
               borderRadius:12, padding:"9px 16px",
@@ -506,7 +503,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
               display:"flex", alignItems:"center", gap:8,
               backdropFilter:"blur(4px)"
             }}>
-              {uploadingImg ? "Upload…" : "📷 Modifier"}
+              {uploadingImg ? "Upload…" : "Modifier la photo"}
               <input type="file" accept="image/*" style={{ display:"none" }}
                 onChange={handleImageEdit} disabled={uploadingImg} />
             </label>
@@ -601,7 +598,7 @@ function EventDetailView({ ev, navigate, onJoin, onLike, onContactHost, onUpdate
             width:"100%", padding:"11px", borderRadius:12, fontWeight:600,
             fontSize:14, cursor:"pointer", border:`1.5px solid ${T.border}`,
             background:"transparent", color:T.text, fontFamily:F.body, marginBottom:8
-          }}>💬 Contacter l'organisateur</button>
+          }}>Contacter l'organisateur</button>
 
           {onLike && (
             <button onClick={() => onLike(ev.id)} style={{
@@ -715,7 +712,7 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
       console.error("Chat error:", err);
       setTyping(false);
       setConvos(prev => prev.map((c,i) => i===active
-        ? {...c, msgs:[...c.msgs, {me:false, txt:"⚠️ Impossible de joindre l'IA. Réessaie dans un instant."}], preview:"Erreur de connexion", time:"maintenant"}
+        ? {...c, msgs:[...c.msgs, {me:false, txt:"Impossible de joindre l'IA. Réessaie dans un instant."}], preview:"Erreur de connexion", time:"maintenant"}
         : c));
     }
   };
@@ -733,12 +730,11 @@ function MessagesView({ convos, setConvos, activeConvoId, setActiveConvoId, navi
         alignItems:"center", justifyContent:"center",
         padding:"48px 24px", textAlign:"center", gap:16
       }}>
-        <div style={{ fontSize:64, opacity:0.35 }}>💬</div>
         <h2 style={{ fontSize:22, fontFamily:F.title, fontWeight:400, color:T.text, margin:0 }}>
           Aucune conversation pour l'instant
         </h2>
         <p style={{ fontSize:14, color:T.sec, fontFamily:F.body, maxWidth:420, lineHeight:1.6, margin:0, fontWeight:500 }}>
-          Pour démarrer une discussion, ouvre un événement qui t'intéresse et clique sur <span style={{color:T.coral, fontWeight:700}}>« 💬 Contacter l'organisateur »</span>.
+          Pour démarrer une discussion, ouvre un événement qui t'intéresse et clique sur <span style={{color:T.coral, fontWeight:700}}>« Contacter l'organisateur »</span>.
         </p>
         <button onClick={() => navigate && navigate("home")} className="sv-btn-primary" style={{
           marginTop:8,
@@ -1001,7 +997,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
             display:"flex", alignItems:"center", justifyContent:"center",
             cursor: uploadingAvatar ? "wait" : "pointer", fontSize:11
           }} title="Changer la photo">
-            {uploadingAvatar ? "…" : "📷"}
+            {uploadingAvatar ? "…" : "+"}
             <input id="sv-avatar-upload" type="file" accept="image/*"
               style={{ display:"none" }} onChange={handleAvatarUpload}
               disabled={uploadingAvatar} />
@@ -1031,13 +1027,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
             border:"1.5px solid rgba(255,255,255,0.25)", borderRadius:10,
             padding:"9px 16px", fontWeight:700, fontSize:13,
             cursor:"pointer", fontFamily:F.body, whiteSpace:"nowrap"
-          }}>✏️ Modifier</button>
-          <button style={{
-            background:"rgba(255,255,255,0.08)", color:"rgba(255,255,255,0.65)",
-            border:"1.5px solid rgba(255,255,255,0.15)", borderRadius:10,
-            padding:"9px 12px", fontWeight:600, fontSize:13,
-            cursor:"pointer", fontFamily:F.body
-          }}>📤</button>
+          }}>Modifier</button>
         </div>
       </div>
 
@@ -1062,7 +1052,6 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
         <div style={{ padding:"28px 32px", color:T.sec,
           background:T.card, borderRadius:16, marginBottom:48, border:`1px solid ${T.border}`,
           display:"flex", alignItems:"center", gap:16 }}>
-          <span style={{ fontSize:22, color:T.border, flexShrink:0 }}>✨</span>
           <p style={{ fontWeight:500, fontFamily:F.body, margin:0, fontSize:14 }}>
             Tu n'as pas encore créé d'activité. Clique sur <span style={{color:T.coral, fontWeight:700}}>« + Créer »</span> pour lancer la tienne !
           </p>
@@ -1070,7 +1059,7 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
       )}
 
       {/* Favoris */}
-      <SectionTitle>♥ Mes favoris</SectionTitle>
+      <SectionTitle>Mes favoris</SectionTitle>
       {liked.length > 0 ? (
         <div className="sv-ev-grid sv-ev-grid-3">
           {liked.map((ev,i) => (
@@ -1081,7 +1070,6 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
         <div style={{ padding:"28px 32px", color:T.sec,
           background:T.card, borderRadius:16, marginBottom:48, border:`1px solid ${T.border}`,
           display:"flex", alignItems:"center", gap:16 }}>
-          <span style={{ fontSize:22, color:T.border, flexShrink:0 }}>♡</span>
           <p style={{ fontWeight:500, fontFamily:F.body, margin:0, fontSize:14 }}>
             Aucun favori pour l'instant. Clique sur le ♡ d'une activité pour la retrouver ici.
           </p>
@@ -1100,7 +1088,6 @@ function ProfileView({ events, navigate, onLike, profile, setProfile, onAvatarUp
         <div style={{ padding:"28px 32px", color:T.sec,
           background:T.card, borderRadius:16, marginBottom:48, border:`1px solid ${T.border}`,
           display:"flex", alignItems:"center", gap:16 }}>
-          <span style={{ fontSize:22, color:T.border, flexShrink:0 }}>◷</span>
           <p style={{ fontWeight:500, fontFamily:F.body, margin:0, fontSize:14 }}>
             Aucun événement à venir. Rejoins une activité depuis l'accueil !
           </p>
@@ -1364,7 +1351,6 @@ function CreateEventView({ navigate, currentUser, onCreated, editEvent }) {
               }}
                 onMouseEnter={e=>e.currentTarget.style.borderColor=T.coral}
                 onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
-                <span style={{ fontSize:28, marginBottom:8 }}>📷</span>
                 <span style={{ fontSize:14, fontWeight:600, color:T.sec, fontFamily:F.body }}>Ajouter une photo</span>
                 <span style={{ fontSize:12, color:T.sec, fontFamily:F.body, marginTop:4 }}>JPG, PNG — max 5 Mo</span>
                 <input type="file" accept="image/*" style={{ display:"none" }} onChange={handleImageChange} />
@@ -1415,7 +1401,7 @@ function CreateEventView({ navigate, currentUser, onCreated, editEvent }) {
               border:"none", borderRadius:14, fontFamily:F.body,
               fontWeight:700, fontSize:16, cursor: loading ? "not-allowed" : "pointer",
               boxShadow:"0 4px 16px rgba(251,99,118,0.3)", opacity: loading ? 0.7 : 1
-            }}>{loading ? "Enregistrement…" : isEdit ? "✏️ Enregistrer les modifications" : "✨ Publier l'événement"}</button>
+            }}>{loading ? "Enregistrement…" : isEdit ? "Enregistrer les modifications" : "Publier l'événement"}</button>
             <button onClick={()=>navigate(-1)} style={{
               padding:"15px 24px", background:"transparent", color:T.sec,
               border:`1.5px solid ${T.border}`, borderRadius:14,
