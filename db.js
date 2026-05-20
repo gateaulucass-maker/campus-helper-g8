@@ -69,7 +69,8 @@ const DB = (() => {
     const { error: upErr } = await s.storage.from("activity-images").upload(path, file, { upsert: true });
     if (upErr) throw upErr;
     const { data } = s.storage.from("activity-images").getPublicUrl(path);
-    await s.from("activities").update({ image_url: data.publicUrl }).eq("id", activityId);
+    const { error: updErr } = await s.from("activities").update({ image_url: data.publicUrl }).eq("id", activityId);
+    if (updErr) throw updErr;
     return data.publicUrl;
   }
 
@@ -161,6 +162,7 @@ const DB = (() => {
         joined:       registrations.some(r => r.user_id === currentUserId),
         participants: registrations.length,
         past:         actDate ? actDate < now : false,
+        createdByMe:  a.creator_id === currentUserId,
       };
     });
   }
