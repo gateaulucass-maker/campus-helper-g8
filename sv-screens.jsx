@@ -8,6 +8,8 @@ function HomeView({ events, navigate, onLike, profile }) {
   const [showAllActu, setShowAllActu] = React.useState(false);
   const [showAllSugg, setShowAllSugg] = React.useState(false);
 
+  const upcomingEvents = events.filter(e => !e.past);
+
   // Combined filter: query + category
   const filtered = events.filter(e => {
     const matchCat = activeCat === "Tous" || e.cat === activeCat;
@@ -140,16 +142,16 @@ function HomeView({ events, navigate, onLike, profile }) {
         <>
           <SectionTitle action={showAllActu ? "Réduire" : "Voir tout"} onAction={() => setShowAllActu(v => !v)}>Actualité</SectionTitle>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, marginBottom:48 }}>
-            {(() => { const upcoming = events.filter(e => !e.past); return (showAllActu ? upcoming : upcoming.slice(0,3)).map((ev,i) => (
+            {(showAllActu ? upcomingEvents : upcomingEvents.slice(0,3)).map((ev,i) => (
               <EventCard key={ev.id} ev={ev} idx={i} onClick={ev => navigate("detail", ev)} onLike={onLike} />
-            )); })()}
+            ))}
           </div>
 
           <SectionTitle action={showAllSugg ? "Réduire" : "Voir tout"} onAction={() => setShowAllSugg(v => !v)}>Suggestions pour toi</SectionTitle>
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            {(() => { const upcoming = events.filter(e => !e.past); return (showAllSugg ? upcoming : upcoming.slice(0,5)).map((ev,i) => (
+            {(showAllSugg ? upcomingEvents : upcomingEvents.slice(0,5)).map((ev,i) => (
               <EventCardHorizontal key={ev.id} ev={ev} idx={i+3} onClick={ev => navigate("detail", ev)} onLike={onLike} />
-            )); })()}
+            ))}
           </div>
         </>
       )}
